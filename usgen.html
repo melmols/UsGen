@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>User Enum Generator</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d1117; color: #c9d1d9; font-family: 'Segoe UI', monospace; min-height: 100vh; }
+
+.header { background: #161b22; border-bottom: 1px solid #30363d; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+.header h1 { font-size: 18px; color: #58a6ff; }
+.badge { background: #21262d; border: 1px solid #30363d; border-radius: 12px; padding: 2px 10px; font-size: 11px; color: #9baab6; }
+
+.container { padding: 20px 24px; max-width: 1100px; }
+
+.input-area { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.input-area label { display: block; font-size: 12px; color: #9baab6; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+textarea { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-family: monospace; font-size: 12px; padding: 10px; resize: vertical; min-height: 100px; outline: none; }
+textarea:focus { border-color: #58a6ff; }
+input[type="text"] { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-family: monospace; font-size: 12px; padding: 8px 10px; outline: none; width: 100%; }
+input[type="text"]:focus { border-color: #58a6ff; }
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+.btn { background: #238636; color: #fff; border: none; border-radius: 6px; padding: 8px 18px; font-size: 13px; cursor: pointer; transition: background .2s; }
+.btn:hover { background: #2ea043; }
+.btn:active { transform: scale(.96); }
+.btn-secondary { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; }
+.btn-secondary:hover { background: #30363d; }
+.btn-secondary:active { transform: scale(.96); }
+.btn-blue { background: #1f6feb; }
+.btn-blue:hover { background: #388bfd; }
+.btn-blue:active { transform: scale(.96); }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn-paste { background: #21262d; border: 1px solid #30363d; color: #9baab6; border-radius: 5px; padding: 3px 10px; font-size: 11px; cursor: pointer; transition: all .15s; }
+.btn-paste:hover { border-color: #58a6ff; color: #58a6ff; }
+.btn-paste:active { transform: scale(.96); }
+
+/* Name preview */
+.name-preview { margin-top: 10px; border-top: 1px solid #30363d; padding-top: 10px; display: none; }
+.name-preview table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.name-preview th { color: #9baab6; text-align: left; padding: 3px 6px; font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: .4px; }
+.name-preview td { padding: 3px 6px; border-top: 1px solid #21262d; font-family: monospace; }
+.name-preview .ok   { color: #29d4bf; }
+.name-preview .warn { color: #d29922; }
+.name-preview .more { font-size: 11px; color: #9baab6; padding: 4px 6px; }
+
+/* Format selector */
+.format-panel { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.format-panel h3 { font-size: 13px; color: #c9d1d9; margin-bottom: 12px; }
+.format-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.format-item { display: flex; align-items: center; gap: 8px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; cursor: pointer; transition: border-color .15s, transform .12s; }
+.format-item:hover { border-color: #58a6ff; }
+.format-item:active { transform: scale(.98); }
+.format-item.active { border-color: #58a6ff; background: #1b2a3b; }
+.format-item input[type="checkbox"] { accent-color: #58a6ff; width: 14px; height: 14px; flex-shrink: 0; }
+.format-item .fmt-label { font-size: 12px; color: #c9d1d9; font-family: monospace; }
+.format-item .fmt-example { font-size: 10px; color: #9baab6; margin-left: auto; white-space: nowrap; }
+
+.section-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+
+.suffix-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #30363d; }
+.suffix-row label { font-size: 12px; color: #9baab6; }
+.suffix-tag { background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 3px 8px; font-size: 11px; color: #9baab6; cursor: pointer; font-family: monospace; transition: all .15s; }
+.suffix-tag:hover { border-color: #58a6ff; color: #58a6ff; }
+.suffix-tag:active { transform: scale(.96); }
+.suffix-tag.active { background: #1b2a3b; border-color: #58a6ff; color: #58a6ff; }
+
+/* Template panel */
+.template-panel { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.template-panel h3 { font-size: 13px; color: #c9d1d9; margin-bottom: 4px; }
+.template-panel .sub { font-size: 11px; color: #9baab6; margin-bottom: 10px; }
+.template-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.template-row input { width: 220px; flex-shrink: 0; }
+.presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.preset-btn { background: #21262d; border: 1px solid #30363d; color: #9baab6; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; font-family: monospace; transition: all .15s; }
+.preset-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+.preset-btn:active { transform: scale(.96); }
+.preset-btn.active { border-color: #58a6ff; color: #58a6ff; background: #1b2a3b; }
+
+/* Cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; text-align: center; }
+.card .num { font-size: 26px; font-weight: bold; color: #58a6ff; }
+.card .lbl { font-size: 11px; color: #9baab6; margin-top: 4px; text-transform: uppercase; }
+.card.success .num { color: #29d4bf; }
+.card.warn .num { color: #d29922; }
+.card.danger .num { color: #f85149; }
+.card[data-goto] { cursor: pointer; transition: border-color .15s, transform .12s; }
+.card[data-goto]:hover { border-color: #58a6ff; transform: translateY(-2px); }
+.card[data-goto]:active { transform: scale(.96); }
+
+/* Collision warning */
+.collision-warn { background: #2d2a15; border: 1px solid #d29922; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; }
+.collision-warn .cw-title { font-size: 12px; color: #d29922; font-weight: 600; margin-bottom: 8px; }
+.collision-warn table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.collision-warn td { padding: 3px 8px; border-top: 1px solid #3a3510; font-family: monospace; color: #c9d1d9; }
+.collision-warn td:first-child { color: #d29922; width: 160px; }
+
+/* Output tabs */
+.tabs-bar { display: flex; gap: 2px; margin-bottom: 0; }
+.out-tab { padding: 8px 18px; font-size: 13px; color: #9baab6; cursor: pointer; background: #21262d; border: 1px solid #30363d; border-bottom: none; border-radius: 6px 6px 0 0; transition: all .15s; }
+.out-tab:hover { color: #c9d1d9; }
+.out-tab:active { transform: scale(.97); }
+.out-tab.active { color: #58a6ff; background: #161b22; border-color: #58a6ff; }
+
+.out-panel { background: #161b22; border: 1px solid #30363d; border-radius: 0 8px 8px 8px; display: none; }
+.out-panel.active { display: block; }
+.out-header { padding: 10px 14px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.out-header span { font-size: 12px; color: #9baab6; }
+.out-textarea { width: 100%; background: #0d1117; border: none; border-radius: 0 0 8px 8px; color: #29d4bf; font-family: monospace; font-size: 12px; padding: 12px; resize: vertical; min-height: 280px; outline: none; }
+
+.copy-btn { background: none; border: 1px solid #30363d; color: #9baab6; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; transition: all .15s; }
+.copy-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+.copy-btn:active { transform: scale(.93); }
+.copy-btn.copied { border-color: #29d4bf; color: #29d4bf; background: #0b3535; }
+
+.dl-btn { background: none; border: 1px solid #30363d; color: #9baab6; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; transition: all .15s; }
+.dl-btn:hover { border-color: #29d4bf; color: #29d4bf; }
+.dl-btn:active { transform: scale(.93); }
+
+.hint { font-size: 11px; color: #9baab6; margin-top: 6px; }
+
+/* Password panel */
+.pw-panel { background: #161b22; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 16px; }
+.pw-panel-header { padding: 12px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.pw-panel-header h3 { font-size: 13px; color: #c9d1d9; flex: 1; }
+.pw-toggle { position: relative; width: 34px; height: 18px; flex-shrink: 0; }
+.pw-toggle input { opacity: 0; width: 0; height: 0; }
+.pw-toggle-slider { position: absolute; inset: 0; background: #30363d; border-radius: 18px; transition: .2s; }
+.pw-toggle-slider:before { content: ''; position: absolute; width: 12px; height: 12px; left: 3px; top: 3px; background: #9baab6; border-radius: 50%; transition: .2s; }
+.pw-toggle input:checked + .pw-toggle-slider { background: #1f6feb; }
+.pw-toggle input:checked + .pw-toggle-slider:before { transform: translateX(16px); background: #fff; }
+.pw-panel-body { padding: 0 16px 16px; display: none; border-top: 1px solid #30363d; }
+.pw-panel-body.open { display: block; }
+.pw-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin: 12px 0; }
+.pw-cat { display: flex; align-items: center; gap: 8px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; cursor: pointer; transition: border-color .15s; }
+.pw-cat:hover { border-color: #58a6ff; }
+.pw-cat.active { border-color: #58a6ff; background: #1b2a3b; }
+.pw-cat input[type="checkbox"] { accent-color: #58a6ff; width: 14px; height: 14px; flex-shrink: 0; }
+.pw-cat .cat-label { font-size: 12px; color: #c9d1d9; }
+.pw-cat .cat-sub { font-size: 10px; color: #9baab6; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span>👤</span>
+  <h1>User Enum Generator</h1>
+  <span class="badge">v2</span>
+  <span style="margin-left:auto;font-size:12px;color:#30363d;letter-spacing:1px">crafted by <span style="color:#58a6ff;font-weight:600">melmols 🐱</span></span>
+</div>
+
+<div class="container">
+
+  <!-- Name input -->
+  <div class="row">
+    <div class="input-area" style="margin-bottom:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <label style="margin-bottom:0">Names, one per line (First Last)</label>
+        <button class="btn-paste" id="paste-btn">📋 Paste from clipboard</button>
+      </div>
+      <textarea id="names-input" placeholder="John Smith&#10;Jane Doe&#10;Robert Jones&#10;..."></textarea>
+      <p class="hint">Supports: "First Last", "Last, First", or single names</p>
+      <!-- Name preview -->
+      <div class="name-preview" id="name-preview">
+        <table>
+          <thead><tr><th>Original</th><th>First</th><th>Last</th><th>Status</th></tr></thead>
+          <tbody id="preview-body"></tbody>
+        </table>
+        <div class="more" id="preview-more"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="input-area" style="margin-bottom:0">
+        <label>Domain (for email generation)</label>
+        <input type="text" id="domain-input" placeholder="example.com  (no @ needed)">
+        <p class="hint">e.g. <code style="color:#58a6ff">example.com</code> → john.smith@example.com · Leave blank to skip</p>
+      </div>
+      <div class="input-area" style="margin-bottom:0;flex:1">
+        <label>Case</label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;text-transform:none;letter-spacing:0">
+            <input type="radio" name="case" value="lower" checked style="accent-color:#58a6ff"> lowercase
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;text-transform:none;letter-spacing:0">
+            <input type="radio" name="case" value="keep" style="accent-color:#58a6ff"> keep original
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Format selector -->
+  <div class="format-panel">
+    <h3>Username Formats</h3>
+    <div class="format-grid" id="format-grid"></div>
+    <div class="section-actions">
+      <button class="btn btn-secondary btn-sm" onclick="selectAll()">Select All</button>
+      <button class="btn btn-secondary btn-sm" onclick="selectNone()">Select None</button>
+      <button class="btn btn-secondary btn-sm" onclick="selectCommon()">Common Only</button>
+    </div>
+    <div class="suffix-row">
+      <label>Numeric suffixes:</label>
+      <span id="suffix-tags"></span>
+      <span style="font-size:11px;color:#9baab6;margin-left:4px">(appended to each username)</span>
+    </div>
+  </div>
+
+  <!-- Output template -->
+  <div class="template-panel">
+    <h3>Output Template</h3>
+    <p class="sub">Use <code style="color:#58a6ff">{u}</code> for username, <code style="color:#d29922">{p}</code> for password. Pass straight to Hydra or Burp</p>
+    <div class="template-row" style="margin-bottom:10px">
+      <input type="text" id="template-input" value="{u}" placeholder="{u}">
+      <div class="presets" id="preset-btns">
+        <button class="preset-btn active" data-tpl="{u}">{u}</button>
+        <button class="preset-btn" data-tpl="{u}:{p}">{u}:{p}</button>
+        <button class="preset-btn" data-tpl="{u}:{u}">{u}:{u}</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label style="font-size:12px;color:#9baab6;white-space:nowrap">Password <code style="color:#d29922">{p}</code>:</label>
+      <input type="text" id="password-input" placeholder="leave blank if not using {p}" style="width:220px;flex-shrink:0">
+      <div class="presets" id="password-presets">
+        <button class="preset-btn" data-pwd="password">password</button>
+        <button class="preset-btn" data-pwd="Password1">Password1</button>
+        <button class="preset-btn" data-pwd="Welcome1">Welcome1</button>
+        <button class="preset-btn" data-pwd="P@ssw0rd">P@ssw0rd</button>
+        <button class="preset-btn" data-pwd="admin">admin</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Wordlist -->
+  <div class="pw-panel">
+    <div class="pw-panel-header" onclick="togglePwPanel()">
+      <h3>🔑 Password Wordlist <span style="font-size:11px;color:#9baab6;font-weight:normal">— generate a spray list from names, domain, and keywords</span></h3>
+      <label class="pw-toggle" onclick="event.stopPropagation()">
+        <input type="checkbox" id="pw-enabled" onchange="togglePwPanel()">
+        <span class="pw-toggle-slider"></span>
+      </label>
+    </div>
+    <div class="pw-panel-body" id="pw-body">
+      <div class="pw-cats" id="pw-cats">
+        <label class="pw-cat active">
+          <input type="checkbox" id="pw-cat-names" checked>
+          <span class="cat-label">Names</span>
+          <span class="cat-sub">first + last</span>
+        </label>
+        <label class="pw-cat active">
+          <input type="checkbox" id="pw-cat-domain" checked>
+          <span class="cat-label">Company / Domain</span>
+          <span class="cat-sub">from email domain</span>
+        </label>
+        <label class="pw-cat">
+          <input type="checkbox" id="pw-cat-custom">
+          <span class="cat-label">Custom Keywords</span>
+          <span class="cat-sub">see below</span>
+        </label>
+        <label class="pw-cat active">
+          <input type="checkbox" id="pw-cat-seasonal" checked>
+          <span class="cat-label">Seasonal</span>
+          <span class="cat-sub">Winter/Summer…</span>
+        </label>
+        <label class="pw-cat active">
+          <input type="checkbox" id="pw-cat-corporate" checked>
+          <span class="cat-label">Common Corporate</span>
+          <span class="cat-sub">Welcome1! etc.</span>
+        </label>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;color:#9baab6;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Custom keywords <span style="text-transform:none;letter-spacing:0">(org name, location, project — one per line)</span></label>
+        <textarea id="pw-custom-input" placeholder="RastaLabs&#10;London&#10;Rasta" style="min-height:70px"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:12px;color:#9baab6">Years:</span>
+        <span id="pw-year-tags"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generate -->
+  <div style="display:flex;gap:8px;margin-bottom:20px">
+    <button class="btn" onclick="generate()">⚡ Generate</button>
+    <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="cards" id="stats" style="display:none">
+    <div class="card success" data-goto="names"><div class="num" id="stat-names">0</div><div class="lbl">Names</div></div>
+    <div class="card" data-goto="usernames"><div class="num" id="stat-users">0</div><div class="lbl">Usernames</div></div>
+    <div class="card warn" data-goto="emails"><div class="num" id="stat-emails">0</div><div class="lbl">Emails</div></div>
+    <div class="card" data-goto="combined"><div class="num" id="stat-total">0</div><div class="lbl">Total</div></div>
+    <div class="card" id="stat-passwords-card" data-goto="passwords" style="display:none"><div class="num" id="stat-passwords">0</div><div class="lbl">Passwords</div></div>
+    <div class="card danger" id="stat-collisions-card" data-goto="collisions" style="display:none"><div class="num" id="stat-collisions">0</div><div class="lbl">Collisions</div></div>
+  </div>
+
+  <!-- Collision warning -->
+  <div class="collision-warn" id="collision-warn" style="display:none">
+    <div class="cw-title">⚠️ Username collisions detected. These usernames were generated by more than one person</div>
+    <table><tbody id="collision-body"></tbody></table>
+  </div>
+
+  <!-- Output -->
+  <div id="output-section" style="display:none">
+    <div class="tabs-bar">
+      <div class="out-tab active" data-tab="usernames">Usernames</div>
+      <div class="out-tab" data-tab="emails" id="emails-tab">Emails</div>
+      <div class="out-tab" data-tab="combined" id="combined-tab">Combined</div>
+      <div class="out-tab" data-tab="passwords" id="passwords-tab" style="display:none">Passwords</div>
+    </div>
+    <div class="out-panel active" id="panel-usernames">
+      <div class="out-header">
+        <span id="lbl-usernames">0 entries</span>
+        <div style="display:flex;gap:6px">
+          <button class="copy-btn" data-target="out-usernames">copy</button>
+          <button class="dl-btn" data-target="out-usernames" data-filename="usernames.txt">⬇ download .txt</button>
+        </div>
+      </div>
+      <textarea class="out-textarea" id="out-usernames" readonly></textarea>
+    </div>
+    <div class="out-panel" id="panel-emails">
+      <div class="out-header">
+        <span id="lbl-emails">0 entries</span>
+        <div style="display:flex;gap:6px">
+          <button class="copy-btn" data-target="out-emails">copy</button>
+          <button class="dl-btn" data-target="out-emails" data-filename="emails.txt">⬇ download .txt</button>
+        </div>
+      </div>
+      <textarea class="out-textarea" id="out-emails" readonly></textarea>
+    </div>
+    <div class="out-panel" id="panel-combined">
+      <div class="out-header">
+        <span id="lbl-combined">0 entries</span>
+        <div style="display:flex;gap:6px">
+          <button class="copy-btn" data-target="out-combined">copy</button>
+          <button class="dl-btn" data-target="out-combined" data-filename="wordlist.txt">⬇ download .txt</button>
+        </div>
+      </div>
+      <textarea class="out-textarea" id="out-combined" readonly></textarea>
+    </div>
+    <div class="out-panel" id="panel-passwords">
+      <div class="out-header">
+        <span id="lbl-passwords">0 entries</span>
+        <div style="display:flex;gap:6px">
+          <button class="copy-btn" data-target="out-passwords">copy</button>
+          <button class="dl-btn" data-target="out-passwords" data-filename="passwords.txt">⬇ download .txt</button>
+        </div>
+      </div>
+      <textarea class="out-textarea" id="out-passwords" readonly></textarea>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── Format definitions ──────────────────────────────────────
+const FORMATS = [
+  { id: 'fi_ln',      label: '{fi}{last}',      example: 'jsmith',     common: true,  fn: (f,l) => f[0]+l },
+  { id: 'fn_dot_ln',  label: '{first}.{last}',   example: 'john.smith', common: true,  fn: (f,l) => f+'.'+l },
+  { id: 'fn_ln',      label: '{first}{last}',    example: 'johnsmith',  common: true,  fn: (f,l) => f+l },
+  { id: 'fn_us_ln',   label: '{first}_{last}',   example: 'john_smith', common: true,  fn: (f,l) => f+'_'+l },
+  { id: 'fi_dot_ln',  label: '{fi}.{last}',      example: 'j.smith',    common: true,  fn: (f,l) => f[0]+'.'+l },
+  { id: 'ln_dot_fn',  label: '{last}.{first}',   example: 'smith.john', common: false, fn: (f,l) => l+'.'+f },
+  { id: 'ln_fn',      label: '{last}{first}',    example: 'smithjohn',  common: false, fn: (f,l) => l+f },
+  { id: 'ln_us_fn',   label: '{last}_{first}',   example: 'smith_john', common: false, fn: (f,l) => l+'_'+f },
+  { id: 'ln_fi',      label: '{last}{fi}',       example: 'smithj',     common: true,  fn: (f,l) => l+f[0] },
+  { id: 'fn_li',      label: '{first}{li}',      example: 'johns',      common: false, fn: (f,l) => f+l[0] },
+  { id: 'fn_dot_li',  label: '{first}.{li}',     example: 'john.s',     common: false, fn: (f,l) => f+'.'+l[0] },
+  { id: 'fn_only',    label: '{first}',          example: 'john',       common: false, fn: (f,l) => f },
+  { id: 'ln_only',    label: '{last}',           example: 'smith',      common: false, fn: (f,l) => l },
+  { id: 'ln_dot_fi',  label: '{last}.{fi}',      example: 'smith.j',    common: false, fn: (f,l) => l+'.'+f[0] },
+  { id: 'fi_li_ln',   label: '{fi}{li}.{last}',  example: 'js.smith',   common: false, fn: (f,l) => f[0]+l[0]+'.'+l },
+];
+
+const SUFFIXES = ['1','2','01','123','1234','!'];
+let activeSuffixes = new Set();
+let activeFormats  = new Set(FORMATS.filter(f => f.common).map(f => f.id));
+
+// ─── Render formats ───────────────────────────────────────────
+function renderFormats() {
+  document.getElementById('format-grid').innerHTML = FORMATS.map(f => `
+    <label class="format-item${activeFormats.has(f.id)?' active':''}">
+      <input type="checkbox" data-id="${f.id}"${activeFormats.has(f.id)?' checked':''}>
+      <span class="fmt-label">${f.label}</span>
+      <span class="fmt-example">${f.example}</span>
+    </label>`).join('');
+
+  document.getElementById('suffix-tags').innerHTML = SUFFIXES.map(s => `
+    <span class="suffix-tag${activeSuffixes.has(s)?' active':''}" data-suffix="${s}">${s}</span>`).join('');
+}
+
+document.getElementById('format-grid').addEventListener('change', e => {
+  if (e.target.type !== 'checkbox') return;
+  const id = e.target.dataset.id;
+  if (e.target.checked) activeFormats.add(id); else activeFormats.delete(id);
+  e.target.closest('.format-item').classList.toggle('active', e.target.checked);
+});
+
+document.getElementById('suffix-tags').addEventListener('click', e => {
+  const tag = e.target.closest('.suffix-tag');
+  if (!tag) return;
+  const s = tag.dataset.suffix;
+  if (activeSuffixes.has(s)) activeSuffixes.delete(s); else activeSuffixes.add(s);
+  tag.classList.toggle('active', activeSuffixes.has(s));
+});
+
+function selectAll()    { FORMATS.forEach(f => activeFormats.add(f.id));    renderFormats(); }
+function selectNone()   { activeFormats.clear();                              renderFormats(); }
+function selectCommon() { activeFormats = new Set(FORMATS.filter(f=>f.common).map(f=>f.id)); renderFormats(); }
+
+// ─── Template presets ─────────────────────────────────────────
+document.getElementById('preset-btns').addEventListener('click', e => {
+  const btn = e.target.closest('.preset-btn');
+  if (!btn) return;
+  document.getElementById('template-input').value = btn.dataset.tpl;
+  document.querySelectorAll('#preset-btns .preset-btn').forEach(b => b.classList.toggle('active', b === btn));
+});
+
+document.getElementById('template-input').addEventListener('input', () => {
+  document.querySelectorAll('#preset-btns .preset-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.tpl === document.getElementById('template-input').value));
+});
+
+// Password presets
+document.getElementById('password-presets').addEventListener('click', e => {
+  const btn = e.target.closest('.preset-btn');
+  if (!btn) return;
+  document.getElementById('password-input').value = btn.dataset.pwd;
+  document.querySelectorAll('#password-presets .preset-btn').forEach(b =>
+    b.classList.toggle('active', b === btn));
+});
+
+document.getElementById('password-input').addEventListener('input', () => {
+  document.querySelectorAll('#password-presets .preset-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.pwd === document.getElementById('password-input').value));
+});
+
+function applyTemplate(entry) {
+  const tpl = document.getElementById('template-input').value || '{u}';
+  const pwd = document.getElementById('password-input').value;
+  return tpl.replace(/\{u\}/g, entry).replace(/\{p\}/g, pwd);
+}
+
+// ─── Parse names ─────────────────────────────────────────────
+function parseNames(raw) {
+  const pairs = [];
+  for (const line of raw.split('\n')) {
+    const orig = line.trim();
+    if (!orig) continue;
+    let first = '', last = '';
+    if (orig.includes(',')) {
+      const parts = orig.split(',').map(p => p.trim());
+      last = parts[0]; first = parts[1] || '';
+    } else {
+      const parts = orig.split(/\s+/);
+      first = parts[0] || '';
+      last  = parts.slice(1).join('') || '';
+    }
+    pairs.push({
+      original: orig,
+      first: first.replace(/[^a-zA-Z]/g,''),
+      last:  last.replace(/[^a-zA-Z]/g,''),
+    });
+  }
+  return pairs;
+}
+
+// ─── Live name preview ────────────────────────────────────────
+const PREVIEW_MAX = 6;
+let previewTimer = null;
+
+document.getElementById('names-input').addEventListener('input', () => {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(updatePreview, 280);
+});
+
+function updatePreview() {
+  const raw = document.getElementById('names-input').value.trim();
+  const preview = document.getElementById('name-preview');
+  if (!raw) { preview.style.display = 'none'; return; }
+  const names = parseNames(raw);
+  if (!names.length) { preview.style.display = 'none'; return; }
+
+  const shown = names.slice(0, PREVIEW_MAX);
+  document.getElementById('preview-body').innerHTML = shown.map(n => {
+    const hasLast = !!n.last;
+    const cls  = hasLast ? 'ok' : 'warn';
+    const status = !n.first ? '<span style="color:#f85149">parse error</span>'
+                 : !hasLast ? '<span class="warn">first name only</span>'
+                 :             '<span class="ok">ok</span>';
+    return `<tr>
+      <td style="color:#9baab6">${n.original}</td>
+      <td class="${cls}">${n.first||'—'}</td>
+      <td class="${cls}">${n.last||'—'}</td>
+      <td>${status}</td>
+    </tr>`;
+  }).join('');
+
+  const remaining = names.length - shown.length;
+  document.getElementById('preview-more').textContent = remaining > 0
+    ? `...and ${remaining} more` : '';
+  preview.style.display = 'block';
+}
+
+// ─── Paste from clipboard ─────────────────────────────────────
+document.getElementById('paste-btn').addEventListener('click', () => {
+  navigator.clipboard.readText().then(text => {
+    const ta = document.getElementById('names-input');
+    ta.value = ta.value ? ta.value.trimEnd() + '\n' + text.trim() : text.trim();
+    updatePreview();
+  }).catch(() => alert('Clipboard access denied. Paste manually.'));
+});
+
+// ─── Case helper ─────────────────────────────────────────────
+function applyCase(s) {
+  return document.querySelector('input[name="case"]:checked').value === 'lower'
+    ? s.toLowerCase() : s;
+}
+
+// ─── Generate ─────────────────────────────────────────────────
+function generate() {
+  const raw    = document.getElementById('names-input').value.trim();
+  const domain = document.getElementById('domain-input').value.trim().replace(/^@/,'');
+  if (!raw) return;
+
+  const names = parseNames(raw).filter(n => n.first);
+  if (!names.length) return;
+
+  const selectedFmts = FORMATS.filter(f => activeFormats.has(f.id));
+  if (!selectedFmts.length) { alert('Select at least one username format.'); return; }
+
+  // Track which usernames came from which people (for collision detection)
+  const userToNames  = new Map(); // raw username -> Set of original names
+  const userSet  = new Set();
+  const emailSet = new Set();
+
+  for (const { first, last, original } of names) {
+    const f = applyCase(first);
+    const l = applyCase(last || first);
+    for (const fmt of selectedFmts) {
+      const base = fmt.fn(f, l);
+      userSet.add(base);
+      if (!userToNames.has(base)) userToNames.set(base, new Set());
+      userToNames.get(base).add(original);
+      for (const suf of activeSuffixes) {
+        userSet.add(base + suf);
+        if (!userToNames.has(base+suf)) userToNames.set(base+suf, new Set());
+        userToNames.get(base+suf).add(original);
+      }
+      if (domain) {
+        emailSet.add(base + '@' + domain);
+        for (const suf of activeSuffixes) emailSet.add(base+suf+'@'+domain);
+      }
+    }
+  }
+
+  const users    = [...userSet].sort();
+  const emails   = [...emailSet].sort();
+  const combined = [...new Set([...users, ...emails])].sort();
+
+  // Apply template
+  const templated    = users.map(applyTemplate);
+  const templEmails  = emails.map(u => applyTemplate(u));
+  const templCombined= combined.map(applyTemplate);
+
+  // Collisions: usernames generated by more than one distinct person
+  const collisions = [...userToNames.entries()]
+    .filter(([, ns]) => ns.size > 1)
+    .sort((a,b) => a[0].localeCompare(b[0]));
+
+  // Stats
+  document.getElementById('stat-names').textContent     = names.length;
+  document.getElementById('stat-users').textContent     = users.length;
+  document.getElementById('stat-emails').textContent    = emails.length;
+  document.getElementById('stat-total').textContent     = combined.length;
+  document.getElementById('stats').style.display        = 'grid';
+
+  const collCard = document.getElementById('stat-collisions-card');
+  if (collisions.length) {
+    document.getElementById('stat-collisions').textContent = collisions.length;
+    collCard.style.display = '';
+  } else {
+    collCard.style.display = 'none';
+  }
+
+  // Collision table
+  const warnEl = document.getElementById('collision-warn');
+  if (collisions.length) {
+    document.getElementById('collision-body').innerHTML = collisions.map(([u, ns]) =>
+      `<tr><td>${u}</td><td>${[...ns].join(', ')}</td></tr>`
+    ).join('');
+    warnEl.style.display = 'block';
+  } else {
+    warnEl.style.display = 'none';
+  }
+
+  // Output
+  document.getElementById('out-usernames').value  = templated.join('\n');
+  document.getElementById('out-emails').value     = templEmails.join('\n');
+  document.getElementById('out-combined').value   = templCombined.join('\n');
+  document.getElementById('lbl-usernames').textContent = templated.length + ' entries';
+  document.getElementById('lbl-emails').textContent    = templEmails.length + ' entries';
+  document.getElementById('lbl-combined').textContent  = templCombined.length + ' entries';
+
+  const showEmail = domain && emails.length > 0;
+  document.getElementById('emails-tab').style.display   = showEmail ? '' : 'none';
+  document.getElementById('combined-tab').style.display = showEmail ? '' : 'none';
+
+  // Passwords
+  const pwEnabled = document.getElementById('pw-enabled').checked;
+  const pwCard = document.getElementById('stat-passwords-card');
+  if (pwEnabled) {
+    const passwords = buildPasswords(names, domain);
+    document.getElementById('out-passwords').value = passwords.join('\n');
+    document.getElementById('lbl-passwords').textContent = passwords.length + ' entries';
+    document.getElementById('stat-passwords').textContent = passwords.length;
+    document.getElementById('passwords-tab').style.display = '';
+    pwCard.style.display = '';
+  } else {
+    document.getElementById('passwords-tab').style.display = 'none';
+    pwCard.style.display = 'none';
+  }
+
+  document.getElementById('output-section').style.display = 'block';
+  document.getElementById('output-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function clearAll() {
+  document.getElementById('names-input').value  = '';
+  document.getElementById('domain-input').value = '';
+  document.getElementById('pw-custom-input').value = '';
+  document.getElementById('name-preview').style.display    = 'none';
+  document.getElementById('stats').style.display           = 'none';
+  document.getElementById('collision-warn').style.display  = 'none';
+  document.getElementById('output-section').style.display  = 'none';
+}
+
+// ─── Output tabs ──────────────────────────────────────────────
+function switchOutTab(name) {
+  document.querySelectorAll('.out-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.out-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-'+name));
+}
+
+document.querySelector('.tabs-bar').addEventListener('click', e => {
+  const tab = e.target.closest('.out-tab');
+  if (!tab) return;
+  switchOutTab(tab.dataset.tab);
+});
+
+// ─── Stat card clicks ─────────────────────────────────────────
+document.getElementById('stats').addEventListener('click', e => {
+  const card = e.target.closest('.card[data-goto]');
+  if (!card) return;
+  const target = card.dataset.goto;
+  if (target === 'names') {
+    document.getElementById('names-input').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else if (target === 'collisions') {
+    document.getElementById('collision-warn').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    switchOutTab(target);
+    document.getElementById('output-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+});
+
+// ─── Copy + Download ──────────────────────────────────────────
+document.querySelector('.container').addEventListener('click', e => {
+  const cb = e.target.closest('.copy-btn');
+  if (cb) {
+    navigator.clipboard.writeText(document.getElementById(cb.dataset.target).value);
+    cb.textContent = '✓ copied';
+    cb.classList.add('copied');
+    setTimeout(() => { cb.textContent = 'copy'; cb.classList.remove('copied'); }, 1500);
+    return;
+  }
+  const dl = e.target.closest('.dl-btn');
+  if (dl) {
+    const text = document.getElementById(dl.dataset.target).value;
+    if (!text.trim()) return;
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(new Blob([text], { type: 'text/plain' })),
+      download: dl.dataset.filename,
+    });
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+});
+
+// ─── Password panel ───────────────────────────────────────────
+const PW_YEARS = ['2022','2023','2024','2025','2026'];
+let activePwYears = new Set(['2024','2025']);
+
+function renderPwYears() {
+  document.getElementById('pw-year-tags').innerHTML = PW_YEARS.map(y =>
+    `<span class="suffix-tag${activePwYears.has(y)?' active':''}" data-year="${y}">${y}</span>`
+  ).join('');
+}
+
+document.getElementById('pw-year-tags').addEventListener('click', e => {
+  const tag = e.target.closest('[data-year]');
+  if (!tag) return;
+  const y = tag.dataset.year;
+  if (activePwYears.has(y)) activePwYears.delete(y); else activePwYears.add(y);
+  tag.classList.toggle('active', activePwYears.has(y));
+});
+
+document.getElementById('pw-cats').addEventListener('change', e => {
+  const cat = e.target.closest('.pw-cat');
+  if (cat) cat.classList.toggle('active', e.target.checked);
+});
+
+function togglePwPanel() {
+  const cb = document.getElementById('pw-enabled');
+  const body = document.getElementById('pw-body');
+  // If clicking header (not the checkbox itself), toggle the checkbox
+  if (document.activeElement !== cb) cb.checked = !cb.checked;
+  body.classList.toggle('open', cb.checked);
+}
+
+function cap(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function buildPasswords(names, domain) {
+  const years   = [...activePwYears].sort();
+  const SUFFIXES = ['!', '1', '01', '123', '1!', '@'];
+  const SEASONS  = ['Winter','Spring','Summer','Autumn','Fall'];
+  const MONTHS   = ['January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+  const CORPORATE = ['Welcome1','Welcome1!','Password1','Password1!',
+                     'P@ssw0rd','P@ssword1','Admin123','Admin123!',
+                     'Changeme1!','Letmein1','Letmein1!','Qwerty123!'];
+
+  const passwords = new Set();
+
+  function addWord(word) {
+    const w = cap(word);
+    const wl = word.toLowerCase();
+    passwords.add(w);
+    passwords.add(wl);
+    for (const s of SUFFIXES) { passwords.add(w+s); passwords.add(wl+s); }
+    for (const y of years) {
+      passwords.add(w+y); passwords.add(wl+y);
+      passwords.add(w+y+'!'); passwords.add(wl+y+'!');
+    }
+  }
+
+  if (document.getElementById('pw-cat-names').checked) {
+    const seen = new Set();
+    for (const { first, last } of names) {
+      if (first && !seen.has(first.toLowerCase())) { seen.add(first.toLowerCase()); addWord(first); }
+      if (last  && !seen.has(last.toLowerCase()))  { seen.add(last.toLowerCase());  addWord(last); }
+    }
+  }
+
+  if (document.getElementById('pw-cat-domain').checked && domain) {
+    const company = domain.split('.')[0];
+    if (company) addWord(company);
+  }
+
+  if (document.getElementById('pw-cat-custom').checked) {
+    const raw = document.getElementById('pw-custom-input').value;
+    for (const kw of raw.split(/[\n,]+/).map(k => k.trim()).filter(Boolean)) addWord(kw);
+  }
+
+  if (document.getElementById('pw-cat-seasonal').checked) {
+    for (const s of [...SEASONS, ...MONTHS]) {
+      passwords.add(s); passwords.add(s+'!');
+      for (const y of years) { passwords.add(s+y); passwords.add(s+y+'!'); }
+    }
+  }
+
+  if (document.getElementById('pw-cat-corporate').checked) {
+    for (const p of CORPORATE) passwords.add(p);
+    for (const y of years) {
+      passwords.add('Welcome'+y); passwords.add('Welcome'+y+'!');
+      passwords.add('Password'+y); passwords.add('Password'+y+'!');
+    }
+  }
+
+  return [...passwords].sort((a,b) => a.localeCompare(b));
+}
+
+// ─── Init ─────────────────────────────────────────────────────
+renderFormats();
+renderPwYears();
+</script>
+</body>
+</html>
